@@ -1,0 +1,3 @@
+Hello Fanny.
+
+This file was created automatically through the GitHub connector to verify write access.
