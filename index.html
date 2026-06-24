@@ -3,27 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>今天吃什么</title>
+  <title>Fanny Food Battle</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app-shell">
     <section class="hero-card">
-      <p class="eyebrow">晚饭选择小帮手</p>
-      <h1>今天吃什么</h1>
-      <p class="intro">点几个按钮，先排除不想吃的，再选今天的心情，马上给你 3 个外卖建议。</p>
-    </section>
-
-    <section class="panel" aria-live="polite">
-      <div class="progress" aria-label="选择进度">
-        <span class="progress-dot active" data-step-dot="0"></span>
-        <span class="progress-dot" data-step-dot="1"></span>
-        <span class="progress-dot" data-step-dot="2"></span>
+      <div class="hero-copy">
+        <p class="eyebrow">晚饭挑战赛</p>
+        <h1>Fanny<br />Food Battle</h1>
+        <p class="intro">60 秒内决出今天的晚饭冠军。选赛道、挑心情、品牌 PK，纠结就交给幸运转盘。</p>
+        <div class="hero-actions">
+          <button class="primary-btn" id="startBattleBtn">开始挑战</button>
+          <button class="ghost-btn" id="parentPickBtn">爸爸决定</button>
+        </div>
       </div>
-
-      <div id="questionArea"></div>
-      <div id="resultArea" class="result-area hidden"></div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="trophy">🏆</div>
+        <div class="food-orbit one">🍔</div>
+        <div class="food-orbit two">🍕</div>
+        <div class="food-orbit three">🍜</div>
+      </div>
     </section>
+
+    <section class="top-tabs" aria-label="功能入口">
+      <button data-panel="home" class="tab active">首页</button>
+      <button data-panel="history" class="tab">最近7天</button>
+      <button data-panel="favorites" class="tab">收藏夹</button>
+      <button data-panel="blacklist" class="tab">黑名单</button>
+      <button data-panel="achievements" class="tab">成就</button>
+    </section>
+
+    <section class="panel" id="appPanel" aria-live="polite"></section>
   </main>
 
   <script src="script.js"></script>
