@@ -3,29 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>今天吃什么</title>
+  <title>Fanny Food Battle</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="app-shell">
-    <section class="hero-card">
-      <p class="eyebrow">晚饭选择小帮手</p>
-      <h1>今天吃什么</h1>
-      <p class="intro">点几个按钮，先排除不想吃的，再选今天的心情，马上给你 3 个外卖建议。</p>
-    </section>
-
-    <section class="panel" aria-live="polite">
-      <div class="progress" aria-label="选择进度">
-        <span class="progress-dot active" data-step-dot="0"></span>
-        <span class="progress-dot" data-step-dot="1"></span>
-        <span class="progress-dot" data-step-dot="2"></span>
-      </div>
-
-      <div id="questionArea"></div>
-      <div id="resultArea" class="result-area hidden"></div>
-    </section>
+  <main id="app" class="phone-shell">
+    <section id="homeView" class="view active"></section>
+    <section id="wantView" class="view"></section>
+    <section id="avoidView" class="view"></section>
+    <section id="poolView" class="view"></section>
+    <section id="battleView" class="view"></section>
+    <section id="wheelView" class="view"></section>
+    <section id="hallView" class="view"></section>
   </main>
 
+  <script src="food-data.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
