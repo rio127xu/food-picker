@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fanny Food Battle</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <img src="fanny.jpg" class="avatar"/>
+      <h1>Fanny Food Battle</h1>
+      <p class="subtitle">今天吃什么，由你来战</p>
+    </header>
+
+    <!-- Step 1 -->
+    <section id="step1" class="panel">
+      <h2>Step 1：想吃什么</h2>
+      <div id="categoryList" class="grid"></div>
+      <button onclick="toStep2()">下一步</button>
+    </section>
+
+    <!-- Step 2 -->
+    <section id="step2" class="panel hidden">
+      <h2>Step 2：不想吃什么</h2>
+      <div id="excludeList" class="grid"></div>
+      <button onclick="startBattle()">开始 Battle</button>
+    </section>
+
+    <!-- Battle -->
+    <section id="battle" class="panel hidden">
+
+      <div class="card-container">
+        <div id="cardA" class="card"></div>
+        <div id="cardB" class="card"></div>
+      </div>
+
+      <div class="controls">
+        <button onclick="pick('A')">👎</button>
+        <button onclick="pick('B')">👍</button>
+      </div>
+
+    </section>
+
+    <!-- Result -->
+    <section id="result" class="panel hidden">
+      <h2>今日推荐</h2>
+      <div id="winner"></div>
+
+      <h3>收藏夹</h3>
+      <ul id="favorites"></ul>
+    </section>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
