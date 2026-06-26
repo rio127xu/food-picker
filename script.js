@@ -25,6 +25,16 @@ const state = {
   lastRecommendations: []
 };
 
+// 🚨 V3.5 crash guard
+window.onerror = function () {
+  document.body.innerHTML = `
+    <div style="padding:20px;font-family:sans-serif">
+      <h2>系统已自动恢复</h2>
+      <button onclick="location.reload()">重新加载</button>
+    </div>
+  `;
+};
+
 const questionArea = document.querySelector("#questionArea");
 const resultArea = document.querySelector("#resultArea");
 
@@ -32,6 +42,11 @@ function updateProgress() {
   document.querySelectorAll("[data-step-dot]").forEach((dot, index) => {
     dot.classList.toggle("active", index <= state.step);
   });
+}
+
+// 🔧 FIX: missing wheel entry causing crash
+function renderWheelSetup() {
+  restart();
 }
 
 function renderDislikeStep() {
@@ -53,10 +68,12 @@ function renderDislikeStep() {
   document.querySelectorAll("[data-dislike]").forEach((button) => {
     button.addEventListener("click", () => toggleDislike(button));
   });
+
   document.querySelector("#clearDislikes").addEventListener("click", () => {
     state.dislikes = [];
     renderDislikeStep();
   });
+
   document.querySelector("#nextStep").addEventListener("click", renderCategoryStep);
 }
 
@@ -70,6 +87,7 @@ function toggleDislike(button) {
   }
 
   document.querySelector('[data-dislike="都可以"]').classList.remove("selected");
+
   if (state.dislikes.includes(value)) {
     state.dislikes = state.dislikes.filter((item) => item !== value);
     button.classList.remove("selected");
@@ -82,6 +100,7 @@ function toggleDislike(button) {
 function renderCategoryStep() {
   state.step = 1;
   updateProgress();
+
   questionArea.innerHTML = `
     <h2 class="question-title">今天想吃哪一类？</h2>
     <p class="helper">选一个最像今天心情的按钮：饭、面、粉、小吃、快餐，或者清淡一点。</p>
@@ -100,6 +119,7 @@ function renderCategoryStep() {
       recommendFoods();
     });
   });
+
   document.querySelector("#backStep").addEventListener("click", renderDislikeStep);
   document.querySelector("#randomSafe").addEventListener("click", () => showSafeMenu("先来一个不会出错的安全菜单。"));
 }
@@ -107,6 +127,7 @@ function renderCategoryStep() {
 function recommendFoods() {
   state.step = 2;
   updateProgress();
+
   const filtered = foodList
     .filter((food) => food.category === state.category || food.tags.includes(state.category))
     .filter((food) => !state.dislikes.some((item) => food.tags.includes(item) || food.category === item))
@@ -133,7 +154,9 @@ function uniqueFoods(foods) {
 function renderResults(foods, message) {
   questionArea.innerHTML = "";
   resultArea.classList.remove("hidden");
+
   const roles = ["首选", "备选", "安全选项"];
+
   resultArea.innerHTML = `
     <h2 class="question-title">今晚可以吃：</h2>
     <p class="helper">${message}</p>
@@ -163,19 +186,21 @@ function foodCard(food, role, isBest) {
 
 function handleReject() {
   state.rejectedCount += 1;
+
   if (state.rejectedCount >= 3) {
     showSafeMenu("你已经连续否定 3 次啦，先推荐一个稳妥、不刺激的安全菜单。");
     return;
   }
 
   const rejectedNames = new Set(state.lastRecommendations.map((food) => food.name));
+
   const nextFoods = foodList
     .filter((food) => !rejectedNames.has(food.name))
     .filter((food) => !state.dislikes.some((item) => food.tags.includes(item) || food.category === item))
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
-  renderResults(uniqueFoods([...nextFoods, safeMenu]).slice(0, 3), "没关系，换一批更稳的。也可以重新选择。 ");
+  renderResults(uniqueFoods([...nextFoods, safeMenu]).slice(0, 3), "没关系，换一批更稳的。也可以重新选择。");
 }
 
 function showSafeMenu(message) {
