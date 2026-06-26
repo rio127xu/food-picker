@@ -43,12 +43,26 @@ function goHome() {
   showView("home");
 }
 
-function categoryMeta(category) {
-  return FOOD_CATEGORIES.find(i => i.name === category) || { icon: "🍽️", name: category };
+function playBeep(freq = 520, duration = 0.08) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = "sine";
+    gain.gain.value = 0.05;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => {
+      osc.stop();
+      ctx.close();
+    }, duration * 1000);
+  } catch {}
 }
 
-function stars(rating = 4) {
-  return "★".repeat(rating) + "☆".repeat(5 - rating);
+function categoryMeta(category) {
+  return FOOD_CATEGORIES.find(i => i.name === category) || { icon: "🍽️", name: category };
 }
 
 function todayText() {
@@ -57,7 +71,7 @@ function todayText() {
     "昨天的冠军还能卫冕吗？",
     "新的冠军即将诞生！",
     "今晚只能留下一个！",
-    "准备开始今晚的 Food Battle！"
+    "准备开始 Food Battle！"
   ];
   return lines[new Date().getDate() % lines.length];
 }
@@ -68,24 +82,14 @@ function renderHome() {
 
   views.home.innerHTML = `
     <section class="home-card">
-      <button class="icon-button settings" data-home>🏠</button>
-      <div class="hero-photo">
-        <img src="fanny.jpg" alt="Fanny" />
-        <div class="logo-stack">
-          <span>Fanny</span>
-          <strong>FOOD<br>BATTLE</strong>
-          <em>Tonight's Champion</em>
-        </div>
-      </div>
-      <div class="speech">${todayText()}</div>
-      <div class="home-actions">
-        <button data-action="start">🏆 Start Battle</button>
-        <button data-action="wheel">🎡 Wheel</button>
-        <button data-action="hall">👑 Hall</button>
-      </div>
-      <div class="mini-status">
-        <span>上届：${lastChampion}</span>
-      </div>
+      <button class="icon-button" data-home>🏠</button>
+      <img src="fanny.jpg" class="hero" />
+      <h1>Fanny FOOD BATTLE</h1>
+      <p>${todayText()}</p>
+      <button data-action="start">Start Battle</button>
+      <button data-action="wheel">Lucky Wheel</button>
+      <button data-action="hall">Hall</button>
+      <div>上届冠军：${lastChampion}</div>
     </section>
   `;
 
@@ -98,7 +102,7 @@ function renderHome() {
 function categoryButton(category, selected=false, attr="category") {
   const meta = categoryMeta(category);
   return `<button class="category-card ${selected?"selected":""}" data-${attr}="${category}">
-    <span>${meta.icon}</span><strong>${category}</strong>
+    <span>${meta.icon}</span>${category}
   </button>`;
 }
 
@@ -107,12 +111,9 @@ function renderWantStep() {
   appState.avoided = [];
 
   views.want.innerHTML = `
-    <header class="step-head">
-      <button class="back-btn" data-home>🏠</button>
-      <span>Step 1</span>
-    </header>
-    <h1>想吃什么？</h1>
-    <div class="category-grid">
+    <header><button data-home>🏠</button>Step 1</header>
+    <h2>想吃什么</h2>
+    <div class="grid">
       ${FOOD_CATEGORIES.map(i => categoryButton(i.name,false,"want")).join("")}
     </div>
     <button id="next">下一步</button>
@@ -133,15 +134,12 @@ function renderWantStep() {
 
 function renderAvoidStep() {
   views.avoid.innerHTML = `
-    <header class="step-head">
-      <button class="back-btn" data-home>🏠</button>
-      <span>Step 2</span>
-    </header>
-    <h1>不想吃什么？</h1>
-    <div class="category-grid">
+    <header><button data-home>🏠</button>Step 2</header>
+    <h2>不想吃什么</h2>
+    <div class="grid">
       ${FOOD_CATEGORIES.map(i => categoryButton(i.name,false,"avoid")).join("")}
     </div>
-    <button id="build">生成</button>
+    <button id="build">生成候选</button>
   `;
 
   views.avoid.querySelector("#build").onclick = buildPool;
@@ -162,14 +160,13 @@ function buildPool(){
   renderPool();
 }
 
+// simplified pool screen (no listing, direct start)
 function renderPool(){
   views.pool.innerHTML = `
-    <header class="step-head">
-      <button class="back-btn" data-home>🏠</button>
-      <span>Pool</span>
-    </header>
-    <div>${appState.pool.map(p=>p.name).join("<br>")}</div>
-    <button id="start">Battle</button>
+    <header><button data-home>🏠</button>Ready</header>
+    <h1>准备开始 Battle</h1>
+    <p>候选数量：${appState.pool.length}</p>
+    <button id="start">Start Battle</button>
   `;
 
   views.pool.querySelector("#start").onclick = startBattle;
@@ -178,6 +175,7 @@ function renderPool(){
 }
 
 function startBattle(){
+  playBeep(660);
   appState.currentChampion = appState.pool[0];
   appState.challengerIndex = 1;
   renderBattle();
@@ -188,13 +186,10 @@ function renderBattle(){
   if(!challenger) return finishBattle(appState.currentChampion);
 
   views.battle.innerHTML = `
-    <header class="step-head">
-      <button data-home>🏠</button>
-      <span>Battle</span>
-    </header>
-    <div>
+    <header><button data-home>🏠</button>Battle</header>
+    <div class="vs">
       <button data-pick="${appState.currentChampion.id}">${appState.currentChampion.name}</button>
-      VS
+      <span>VS</span>
       <button data-pick="${challenger.id}">${challenger.name}</button>
     </div>
   `;
@@ -208,6 +203,7 @@ function renderBattle(){
 }
 
 function handleBattlePick(id){
+  playBeep(820);
   const challenger = appState.pool[appState.challengerIndex];
   const winner = [appState.currentChampion, challenger].find(f=>f.id===id);
   appState.currentChampion = winner;
@@ -225,12 +221,9 @@ function finishBattle(winner){
 function renderHall(){
   const data = getData();
   views.hall.innerHTML = `
-    <header class="step-head">
-      <button data-home>🏠</button>
-      <span>Hall</span>
-    </header>
+    <header><button data-home>🏠</button>Hall</header>
     ${data.champions.map((c,i)=>`
-      <div>${c.name} <button data-del="${i}">删除</button></div>
+      <div>${c.name} <button data-del="${i}">删</button></div>
     `).join("")}
   `;
 
