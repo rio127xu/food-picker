@@ -1,196 +1,380 @@
-const foodList = [
-  { name: "黄焖鸡米饭", category: "饭", tags: ["米饭", "热食", "常吃", "不辣", "快"], score: 9 },
-  { name: "番茄牛腩饭", category: "饭", tags: ["米饭", "热食", "不辣", "重口", "常吃"], score: 8 },
-  { name: "鸡腿便当", category: "快餐", tags: ["米饭", "快餐", "热食", "快", "便宜"], score: 8 },
-  { name: "兰州牛肉面", category: "面", tags: ["面食", "热食", "清淡", "快", "常吃"], score: 8 },
-  { name: "重庆小面", category: "面", tags: ["面食", "辣", "热食", "重口", "便宜"], score: 7 },
-  { name: "螺蛳粉", category: "粉", tags: ["粉", "辣", "重口", "热食", "常吃"], score: 7 },
-  { name: "桂林米粉", category: "粉", tags: ["粉", "不辣", "热食", "快", "便宜"], score: 8 },
-  { name: "手抓饼加蛋", category: "小吃", tags: ["小吃", "快", "便宜", "热食", "常吃"], score: 7 },
-  { name: "煎饺 + 紫菜汤", category: "小吃", tags: ["小吃", "热食", "不辣", "便宜", "快"], score: 8 },
-  { name: "汉堡套餐", category: "快餐", tags: ["快餐", "快", "常吃", "不辣", "重口"], score: 7 },
-  { name: "粥 + 蒸饺", category: "清淡", tags: ["清淡", "热食", "不辣", "便宜", "安全"], score: 10 },
-  { name: "鸡汤馄饨", category: "清淡", tags: ["清淡", "热食", "不辣", "常吃", "安全"], score: 9 }
-];
+const STORAGE_KEY = "fanny-food-battle-v3";
 
-const dislikeOptions = ["辣", "不辣", "米饭", "面食", "粉", "小吃", "快餐", "重口", "清淡", "都可以"];
-const categoryOptions = ["饭", "面", "粉", "小吃", "快餐", "清淡"];
-const safeMenu = foodList.find((food) => food.tags.includes("安全"));
-
-const state = {
-  step: 0,
-  dislikes: [],
-  category: "",
-  rejectedCount: 0,
-  lastRecommendations: []
+const appState = {
+  wanted: [],
+  avoided: [],
+  pool: [],
+  currentChampion: null,
+  challengerIndex: 1,
+  battleLog: []
 };
 
-const questionArea = document.querySelector("#questionArea");
-const resultArea = document.querySelector("#resultArea");
+const views = {
+  home: document.querySelector("#homeView"),
+  want: document.querySelector("#wantView"),
+  avoid: document.querySelector("#avoidView"),
+  pool: document.querySelector("#poolView"),
+  battle: document.querySelector("#battleView"),
+  wheel: document.querySelector("#wheelView"),
+  hall: document.querySelector("#hallView")
+};
 
-function updateProgress() {
-  document.querySelectorAll("[data-step-dot]").forEach((dot, index) => {
-    dot.classList.toggle("active", index <= state.step);
-  });
-}
-
-function renderDislikeStep() {
-  state.step = 0;
-  updateProgress();
-  resultArea.classList.add("hidden");
-  questionArea.innerHTML = `
-    <h2 class="question-title">今天不想吃什么？</h2>
-    <p class="helper">可以多选。比如不想吃辣，就点“辣”。如果没有特别讨厌的，点“都可以”。</p>
-    <div class="button-grid">
-      ${dislikeOptions.map((option) => `<button class="choice-button" data-dislike="${option}">${option}</button>`).join("")}
-    </div>
-    <div class="action-row">
-      <button class="action-button secondary" id="clearDislikes">清空</button>
-      <button class="action-button primary" id="nextStep">下一步</button>
-    </div>
-  `;
-
-  document.querySelectorAll("[data-dislike]").forEach((button) => {
-    button.addEventListener("click", () => toggleDislike(button));
-  });
-  document.querySelector("#clearDislikes").addEventListener("click", () => {
-    state.dislikes = [];
-    renderDislikeStep();
-  });
-  document.querySelector("#nextStep").addEventListener("click", renderCategoryStep);
-}
-
-function toggleDislike(button) {
-  const value = button.dataset.dislike;
-  if (value === "都可以") {
-    state.dislikes = [];
-    document.querySelectorAll("[data-dislike]").forEach((item) => item.classList.remove("selected"));
-    button.classList.add("selected");
-    return;
-  }
-
-  document.querySelector('[data-dislike="都可以"]').classList.remove("selected");
-  if (state.dislikes.includes(value)) {
-    state.dislikes = state.dislikes.filter((item) => item !== value);
-    button.classList.remove("selected");
-  } else {
-    state.dislikes.push(value);
-    button.classList.add("selected");
+function getData() {
+  const fallback = { champions: [], hall: {}, battleStats: {}, streak: { name: "", count: 0 } };
+  try {
+    return { ...fallback, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) };
+  } catch {
+    return fallback;
   }
 }
 
-function renderCategoryStep() {
-  state.step = 1;
-  updateProgress();
-  questionArea.innerHTML = `
-    <h2 class="question-title">今天想吃哪一类？</h2>
-    <p class="helper">选一个最像今天心情的按钮：饭、面、粉、小吃、快餐，或者清淡一点。</p>
-    <div class="button-grid">
-      ${categoryOptions.map((option) => `<button class="choice-button" data-category="${option}">${option}</button>`).join("")}
-    </div>
-    <div class="action-row">
-      <button class="action-button secondary" id="backStep">上一步</button>
-      <button class="action-button primary" id="randomSafe">直接安全菜单</button>
-    </div>
-  `;
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
 
-  document.querySelectorAll("[data-category]").forEach((button) => {
+function showView(name) {
+  Object.values(views).forEach((view) => view.classList.remove("active"));
+  views[name].classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function categoryMeta(category) {
+  return FOOD_CATEGORIES.find((item) => item.name === category) || { icon: "🍽️", name: category };
+}
+
+function stars(rating = 4) {
+  return "★".repeat(rating) + "☆".repeat(5 - rating);
+}
+
+function todayText() {
+  const lines = [
+    "今晚谁会成为冠军？",
+    "昨天的冠军还能卫冕吗？",
+    "新的冠军即将诞生！",
+    "今晚只能留下一个！",
+    "准备开始今晚的 Food Battle！"
+  ];
+  return lines[new Date().getDate() % lines.length];
+}
+
+function renderHome() {
+  const data = getData();
+  const lastChampion = data.champions[0]?.name || "还没有冠军";
+  views.home.innerHTML = `
+    <section class="home-card">
+      <button class="icon-button settings" type="button">⚙️</button>
+      <div class="hero-photo">
+        <img src="fanny.jpg" alt="Fanny" />
+        <div class="logo-stack">
+          <span>Fanny</span>
+          <strong>FOOD<br>BATTLE</strong>
+          <em>Tonight's Dinner Champion</em>
+        </div>
+      </div>
+      <div class="speech">${todayText()}</div>
+      <div class="home-actions">
+        <button class="primary-btn" data-action="start">🏆 Start Battle<br><small>开始今晚决赛</small></button>
+        <button class="purple-btn" data-action="wheel">🎡 Lucky Wheel<br><small>交给命运</small></button>
+        <button class="blue-btn" data-action="hall">👑 Hall of Fame<br><small>名人堂 / 排行榜</small></button>
+      </div>
+      <div class="mini-status">
+        <span>上届冠军：${lastChampion}</span>
+        <span>${data.streak?.count > 1 ? `🔥 ${data.streak.name} ${data.streak.count}连胜` : "等待新的连胜"}</span>
+      </div>
+    </section>
+  `;
+  views.home.querySelector('[data-action="start"]').addEventListener("click", renderWantStep);
+  views.home.querySelector('[data-action="wheel"]').addEventListener("click", renderWheelSetup);
+  views.home.querySelector('[data-action="hall"]').addEventListener("click", renderHall);
+}
+
+function categoryButton(category, selected = false, attr = "category") {
+  const meta = categoryMeta(category);
+  return `<button class="category-card ${selected ? "selected" : ""}" data-${attr}="${category}">
+    <span>${meta.icon}</span>
+    <strong>${category}</strong>
+  </button>`;
+}
+
+function renderWantStep() {
+  appState.wanted = [];
+  appState.avoided = [];
+  views.want.innerHTML = `
+    <header class="step-head">
+      <button class="back-btn" data-back>‹</button>
+      <span>👑 Step 1</span>
+    </header>
+    <h1>今天想吃什么？</h1>
+    <p class="hint">可以多选，至少选择一个分类。</p>
+    <div class="category-grid">
+      ${FOOD_CATEGORIES.map((item) => categoryButton(item.name, false, "want")).join("")}
+    </div>
+    <button class="bottom-cta" id="goAvoid">下一步</button>
+  `;
+  views.want.querySelector("[data-back]").addEventListener("click", () => showView("home"));
+  views.want.querySelectorAll("[data-want]").forEach((button) => {
+    button.addEventListener("click", () => togglePick(button, appState.wanted, "want"));
+  });
+  views.want.querySelector("#goAvoid").addEventListener("click", () => {
+    if (!appState.wanted.length) {
+      toast("至少选一个想吃的分类哦");
+      return;
+    }
+    renderAvoidStep();
+  });
+  showView("want");
+}
+
+function renderAvoidStep() {
+  views.avoid.innerHTML = `
+    <header class="step-head">
+      <button class="back-btn" data-back>‹</button>
+      <span>👑 Step 2</span>
+    </header>
+    <h1>今天不想吃什么？</h1>
+    <p class="hint">可以多选。已经选为想吃的分类，不能再排除。</p>
+    <div class="category-grid muted-grid">
+      ${FOOD_CATEGORIES.map((item) => categoryButton(item.name, false, "avoid")).join("")}
+    </div>
+    <button class="bottom-cta" id="buildPool">生成候选池</button>
+  `;
+  views.avoid.querySelector("[data-back]").addEventListener("click", renderWantStep);
+  views.avoid.querySelectorAll("[data-avoid]").forEach((button) => {
+    const value = button.dataset.avoid;
+    if (appState.wanted.includes(value)) button.classList.add("disabled");
     button.addEventListener("click", () => {
-      state.category = button.dataset.category;
-      recommendFoods();
+      if (appState.wanted.includes(value)) {
+        toast("这个分类已经说想吃啦");
+        return;
+      }
+      togglePick(button, appState.avoided, "avoid");
     });
   });
-  document.querySelector("#backStep").addEventListener("click", renderDislikeStep);
-  document.querySelector("#randomSafe").addEventListener("click", () => showSafeMenu("先来一个不会出错的安全菜单。"));
+  views.avoid.querySelector("#buildPool").addEventListener("click", buildPool);
+  showView("avoid");
 }
 
-function recommendFoods() {
-  state.step = 2;
-  updateProgress();
-  const filtered = foodList
-    .filter((food) => food.category === state.category || food.tags.includes(state.category))
-    .filter((food) => !state.dislikes.some((item) => food.tags.includes(item) || food.category === item))
-    .sort((a, b) => b.score - a.score);
-
-  const fallback = foodList
-    .filter((food) => !state.dislikes.some((item) => food.tags.includes(item) || food.category === item))
-    .sort((a, b) => b.score - a.score);
-
-  const recommendations = uniqueFoods([...filtered, ...fallback, safeMenu]).slice(0, 3);
-  state.lastRecommendations = recommendations;
-  renderResults(recommendations, "这是按你刚才的选择挑出来的 3 个选项。");
+function togglePick(button, list, key) {
+  const value = button.dataset[key];
+  if (list.includes(value)) {
+    list.splice(list.indexOf(value), 1);
+    button.classList.remove("selected");
+  } else {
+    list.push(value);
+    button.classList.add("selected");
+  }
 }
 
-function uniqueFoods(foods) {
-  const names = new Set();
-  return foods.filter((food) => {
-    if (!food || names.has(food.name)) return false;
-    names.add(food.name);
-    return true;
-  });
-}
-
-function renderResults(foods, message) {
-  questionArea.innerHTML = "";
-  resultArea.classList.remove("hidden");
-  const roles = ["首选", "备选", "安全选项"];
-  resultArea.innerHTML = `
-    <h2 class="question-title">今晚可以吃：</h2>
-    <p class="helper">${message}</p>
-    <div class="cards">
-      ${foods.map((food, index) => foodCard(food, roles[index] || "推荐", index === 0)).join("")}
-    </div>
-    <div class="action-row">
-      <button class="action-button secondary" id="rejectBtn">不想吃，换一批</button>
-      <button class="action-button primary" id="restartBtn">重新选择</button>
-    </div>
-    ${state.rejectedCount > 0 ? `<p class="notice">已连续否定 ${state.rejectedCount} 次；连续 3 次会自动推荐安全菜单。</p>` : ""}
-  `;
-
-  document.querySelector("#rejectBtn").addEventListener("click", handleReject);
-  document.querySelector("#restartBtn").addEventListener("click", restart);
-}
-
-function foodCard(food, role, isBest) {
-  return `
-    <article class="food-card ${isBest ? "best" : ""}">
-      <span class="food-role">${role}</span>
-      <h3>${food.name}</h3>
-      <div class="tags">${food.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
-    </article>
-  `;
-}
-
-function handleReject() {
-  state.rejectedCount += 1;
-  if (state.rejectedCount >= 3) {
-    showSafeMenu("你已经连续否定 3 次啦，先推荐一个稳妥、不刺激的安全菜单。");
+function buildPool() {
+  appState.pool = FOOD_LIST.filter((food) => appState.wanted.includes(food.category) && !appState.avoided.includes(food.category));
+  if (appState.pool.length < 2) {
+    toast("候选太少啦，请多选几个分类");
     return;
   }
-
-  const rejectedNames = new Set(state.lastRecommendations.map((food) => food.name));
-  const nextFoods = foodList
-    .filter((food) => !rejectedNames.has(food.name))
-    .filter((food) => !state.dislikes.some((item) => food.tags.includes(item) || food.category === item))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-
-  renderResults(uniqueFoods([...nextFoods, safeMenu]).slice(0, 3), "没关系，换一批更稳的。也可以重新选择。 ");
+  renderPool();
 }
 
-function showSafeMenu(message) {
-  state.step = 2;
-  updateProgress();
-  state.lastRecommendations = [safeMenu];
-  renderResults(uniqueFoods([safeMenu, foodList[0], foodList[11]]), message);
+function renderPool() {
+  views.pool.innerHTML = `
+    <header class="step-head">
+      <button class="back-btn" data-back>‹</button>
+      <span>候选池预览</span>
+    </header>
+    <h1>候选池已生成！</h1>
+    <p class="hint">共 ${appState.pool.length} 家店铺。Battle 会按照清单顺序开始守擂。</p>
+    <div class="pool-list">${appState.pool.map(foodMiniCard).join("")}</div>
+    <button class="bottom-cta" id="startBattle">开始 Battle！💪</button>
+  `;
+  views.pool.querySelector("[data-back]").addEventListener("click", renderAvoidStep);
+  views.pool.querySelector("#startBattle").addEventListener("click", startBattle);
+  showView("pool");
 }
 
-function restart() {
-  state.dislikes = [];
-  state.category = "";
-  state.rejectedCount = 0;
-  state.lastRecommendations = [];
-  renderDislikeStep();
+function foodMiniCard(food) {
+  return `<article class="pool-item"><span>${food.icon}</span><strong>${food.name}</strong><small>${food.category}</small></article>`;
 }
 
-renderDislikeStep();
+function startBattle() {
+  appState.currentChampion = appState.pool[0];
+  appState.challengerIndex = 1;
+  appState.battleLog = [];
+  renderBattle();
+}
+
+function renderBattle(anim = "") {
+  const challenger = appState.pool[appState.challengerIndex];
+  if (!challenger) {
+    finishBattle(appState.currentChampion);
+    return;
+  }
+  const total = appState.pool.length;
+  const left = total - appState.challengerIndex;
+  const progress = Math.round((appState.challengerIndex / (total - 1)) * 100);
+
+  views.battle.innerHTML = `
+    <section class="battle-screen">
+      <header class="battle-top">
+        <button class="back-btn light" data-home>‹</button>
+        <div>
+          <strong>Battle 对战中</strong>
+          <span>剩余 ${left}/${total}</span>
+        </div>
+        <span class="crown">👑</span>
+      </header>
+      <div class="battle-progress"><span style="width:${progress}%"></span></div>
+      <div class="battle-stack ${anim}">
+        ${battleCard(appState.currentChampion, "守擂者", "champion")}
+        <div class="vs-flame">VS</div>
+        ${battleCard(challenger, "挑战者", "challenger")}
+      </div>
+      <p class="battle-line">今晚只能留下一个！</p>
+    </section>
+  `;
+  views.battle.querySelector("[data-home]").addEventListener("click", renderHome);
+  views.battle.querySelectorAll("[data-pick]").forEach((card) => {
+    card.addEventListener("click", () => handleBattlePick(card.dataset.pick));
+  });
+  showView("battle");
+}
+
+function battleCard(food, label, role) {
+  return `<button class="battle-card ${role}" data-pick="${food.id}">
+    <span class="food-icon">${food.icon}</span>
+    <span class="food-label">${label}</span>
+    <strong>${food.name}</strong>
+    <span class="stars">${stars(food.rating)}</span>
+    <small>人均 ${food.price}</small>
+  </button>`;
+}
+
+function handleBattlePick(winnerId) {
+  const challenger = appState.pool[appState.challengerIndex];
+  const winner = [appState.currentChampion, challenger].find((food) => food.id === winnerId);
+  const loser = winner.id === appState.currentChampion.id ? challenger : appState.currentChampion;
+  appState.battleLog.push({ winner: winner.name, loser: loser.name, at: new Date().toISOString() });
+  appState.currentChampion = winner;
+  appState.challengerIndex += 1;
+  views.battle.querySelectorAll(".battle-card").forEach((card) => {
+    if (card.dataset.pick !== winnerId) card.classList.add("eliminated");
+    else card.classList.add("winner");
+  });
+  setTimeout(() => renderBattle("slide-in"), 520);
+}
+
+function finishBattle(champion, source = "battle") {
+  const data = getData();
+  const previous = data.champions[0]?.name;
+  const today = new Date().toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
+
+  data.champions.unshift({ name: champion.name, icon: champion.icon, category: champion.category, source, date: today });
+  data.champions = data.champions.slice(0, 30);
+  data.hall[champion.name] = (data.hall[champion.name] || 0) + 1;
+  if (previous === champion.name) data.streak = { name: champion.name, count: (data.streak?.count || 1) + 1 };
+  else data.streak = { name: champion.name, count: 1 };
+  appState.battleLog.forEach((item) => {
+    data.battleStats[item.winner] = data.battleStats[item.winner] || { wins: 0, losses: 0 };
+    data.battleStats[item.loser] = data.battleStats[item.loser] || { wins: 0, losses: 0 };
+    data.battleStats[item.winner].wins += 1;
+    data.battleStats[item.loser].losses += 1;
+  });
+  saveData(data);
+
+  views.battle.innerHTML = `
+    <section class="champion-screen">
+      <div class="confetti">✦ ✨ 🎉 ✦</div>
+      <h1>Tonight's Champion!</h1>
+      <article class="champion-card">
+        <span>${champion.icon}</span>
+        <strong>${champion.name}</strong>
+        <em>${stars(champion.rating)}</em>
+      </article>
+      <p class="hint">已自动加入 Recent Champions 和 Hall of Fame。</p>
+      ${data.streak.count > 1 ? `<div class="streak-box">🔥 ${champion.name} ${data.streak.count} 连胜中！</div>` : `<div class="streak-box">👑 新冠军诞生！</div>`}
+      <div class="triple-actions">
+        <button data-restart>再战一局</button>
+        <button data-hall>看名人堂</button>
+        <button data-home>回首页</button>
+      </div>
+    </section>
+  `;
+  views.battle.querySelector("[data-restart]").addEventListener("click", renderWantStep);
+  views.battle.querySelector("[data-hall]").addEventListener("click", renderHall);
+  views.battle.querySelector("[data-home]").addEventListener("click", renderHome);
+  showView("battle");
+}
+
+function renderWheelSetup() {
+  views.wheel.innerHTML = `
+    <header class="step-head">
+      <button class="back-btn" data-back>‹</button>
+      <span>🎡 Lucky Wheel</span>
+    </header>
+    <h1>幸运大转盘</h1>
+    <p class="hint">先选参与抽奖的分类。最后会直接抽出具体店铺。</p>
+    <div class="category-grid">
+      ${FOOD_CATEGORIES.map((item) => categoryButton(item.name, false, "wheel")).join("")}
+    </div>
+    <button class="bottom-cta" id="spinWheel">开始旋转</button>
+    <div id="wheelResult"></div>
+  `;
+  const selected = [];
+  views.wheel.querySelector("[data-back]").addEventListener("click", renderHome);
+  views.wheel.querySelectorAll("[data-wheel]").forEach((button) => {
+    button.addEventListener("click", () => togglePick(button, selected, "wheel"));
+  });
+  views.wheel.querySelector("#spinWheel").addEventListener("click", () => {
+    const pool = FOOD_LIST.filter((food) => selected.includes(food.category));
+    if (pool.length < 2) {
+      toast("至少选一个有足够候选的分类");
+      return;
+    }
+    const winner = pool[Math.floor(Math.random() * pool.length)];
+    const result = views.wheel.querySelector("#wheelResult");
+    result.innerHTML = `<div class="wheel"><div class="wheel-inner">GO</div></div><p class="spinning">命运转动中...</p>`;
+    setTimeout(() => {
+      result.innerHTML = `<article class="wheel-winner"><span>${winner.icon}</span><strong>${winner.name}</strong><small>幸运冠军</small></article>`;
+      appState.battleLog = [];
+      finishBattle(winner, "wheel");
+    }, 1400);
+  });
+  showView("wheel");
+}
+
+function renderHall() {
+  const data = getData();
+  const ranking = Object.entries(data.hall).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const recent = data.champions.slice(0, 7);
+  views.hall.innerHTML = `
+    <header class="step-head">
+      <button class="back-btn" data-back>‹</button>
+      <span>👑 Hall of Fame</span>
+    </header>
+    <h1>名人堂</h1>
+    <section class="hall-section">
+      <h2>冠军榜</h2>
+      ${ranking.length ? ranking.map(([name, count], index) => `<div class="rank-row"><b>${["🥇","🥈","🥉"][index] || index + 1}</b><span>${name}</span><strong>${count} 冠</strong></div>`).join("") : `<p class="hint">还没有冠军，先开始一场 Battle 吧。</p>`}
+    </section>
+    <section class="hall-section">
+      <h2>Recent Champions</h2>
+      ${recent.length ? recent.map((item) => `<div class="rank-row"><b>${item.icon}</b><span>${item.date}</span><strong>${item.name}</strong></div>`).join("") : `<p class="hint">最近7天还没有记录。</p>`}
+    </section>
+    <section class="stats-grid">
+      <article><strong>${data.champions.length}</strong><span>总冠军次数</span></article>
+      <article><strong>${data.streak?.count || 0}</strong><span>当前连胜</span></article>
+    </section>
+  `;
+  views.hall.querySelector("[data-back]").addEventListener("click", renderHome);
+  showView("hall");
+}
+
+function toast(message) {
+  const existing = document.querySelector(".toast");
+  if (existing) existing.remove();
+  const item = document.createElement("div");
+  item.className = "toast";
+  item.textContent = message;
+  document.body.appendChild(item);
+  setTimeout(() => item.remove(), 1800);
+}
+
+renderHome();
