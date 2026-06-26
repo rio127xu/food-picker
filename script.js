@@ -1,102 +1,120 @@
-const data = [
-  { name: "麦当劳", category: "汉堡" },
-  { name: "肯德基", category: "汉堡" },
-  { name: "汉堡王", category: "汉堡" },
-  { name: "必胜客", category: "披萨" },
-  { name: "达美乐", category: "披萨" },
-  { name: "老乡鸡", category: "快餐" },
-  { name: "南京大排档", category: "南京菜" },
-  { name: "海底捞", category: "火锅麻辣烫" }
+const categories = [
+    "汉堡", "披萨", "川湘", "快餐",
+    "淮扬菜", "南京菜", "面类", "粉类",
+    "水饺", "烧烤/小吃", "轻食",
+    "火锅麻辣烫", "饮品甜点"
 ];
 
-let selectedCats = [];
-let excludedCats = [];
+const foods = [
+    { name: "麦当劳", category: "汉堡" },
+    { name: "肯德基", category: "汉堡" },
+    { name: "汉堡王", category: "汉堡" },
+    { name: "必胜客", category: "披萨" },
+    { name: "达美乐", category: "披萨" },
+    { name: "杨国福麻辣烫", category: "火锅麻辣烫" },
+    { name: "星巴克", category: "饮品甜点" }
+];
+
+let step = 1;
+let want = [];
+let notWant = [];
 let pool = [];
-let currentPair = [];
+let current = [];
 
-const categories = [...new Set(data.map(d => d.category))];
+const optionsEl = document.getElementById("options");
+const stepTitle = document.getElementById("stepTitle");
 
-// Step1 render
-const catEl = document.getElementById("categoryList");
-categories.forEach(c => {
-  const el = document.createElement("div");
-  el.className = "tag";
-  el.innerText = c;
-  el.onclick = () => {
-    el.classList.toggle("selected");
-    toggle(selectedCats, c);
-  };
-  catEl.appendChild(el);
-});
+const battle = document.getElementById("battle");
+const setup = document.getElementById("setup");
+const result = document.getElementById("result");
 
-// Step2 render
-const exEl = document.getElementById("excludeList");
-categories.forEach(c => {
-  const el = document.createElement("div");
-  el.className = "tag";
-  el.innerText = c;
-  el.onclick = () => {
-    el.classList.toggle("selected");
-    toggle(excludedCats, c);
-  };
-  exEl.appendChild(el);
-});
-
-function toggle(arr, v) {
-  if (arr.includes(v)) {
-    arr.splice(arr.indexOf(v), 1);
-  } else {
-    arr.push(v);
-  }
+function renderCategories() {
+    optionsEl.innerHTML = "";
+    categories.forEach(c => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.innerText = c;
+        div.onclick = () => {
+            div.classList.toggle("selected");
+        };
+        optionsEl.appendChild(div);
+    });
 }
 
-function toStep2() {
-  document.getElementById("step1").classList.add("hidden");
-  document.getElementById("step2").classList.remove("hidden");
-}
+document.getElementById("nextBtn").onclick = () => {
+
+    const selected = [...document.querySelectorAll(".option.selected")]
+        .map(e => e.innerText);
+
+    if (step === 1) {
+        want = selected;
+        step = 2;
+        stepTitle.innerText = "选择不想吃的";
+        renderCategories();
+    }
+
+    else if (step === 2) {
+        notWant = selected;
+
+        pool = foods.filter(f =>
+            want.includes(f.category) &&
+            !notWant.includes(f.category)
+        );
+
+        startBattle();
+    }
+};
 
 function startBattle() {
+    setup.classList.add("hidden");
+    battle.classList.remove("hidden");
 
-  pool = data.filter(d =>
-    selectedCats.includes(d.category) &&
-    !excludedCats.includes(d.category)
-  );
-
-  nextPair();
-
-  document.getElementById("step2").classList.add("hidden");
-  document.getElementById("battle").classList.remove("hidden");
+    nextRound();
 }
 
-function nextPair() {
-  if (pool.length <= 1) {
-    showResult();
-    return;
-  }
+function nextRound() {
+    if (pool.length === 1) {
+        showResult(pool[0]);
+        return;
+    }
 
-  currentPair = [pool.pop(), pool.pop()];
+    current = [pool.pop(), pool.pop()];
 
-  document.getElementById("cardA").innerText = currentPair[0]?.name || "";
-  document.getElementById("cardB").innerText = currentPair[1]?.name || "";
+    renderBattle();
 }
 
-function pick(choice) {
-  const winner = choice === "A" ? currentPair[0] : currentPair[1];
+function renderBattle() {
+    const a = document.getElementById("cardA");
+    const b = document.getElementById("cardB");
 
-  pool.unshift(winner);
-  nextPair();
+    a.innerText = current[0].name;
+    b.innerText = current[1].name;
+
+    a.onclick = () => pick(0);
+    b.onclick = () => pick(1);
 }
 
-function showResult() {
-  document.getElementById("battle").classList.add("hidden");
-  document.getElementById("result").classList.remove("hidden");
+function pick(index) {
+    const win = current[index];
+    const lose = current[1 - index];
 
-  const winner = pool[0];
+    pool.unshift(win);
 
-  document.getElementById("winner").innerText = winner.name;
+    const cards = document.querySelectorAll(".card");
 
-  const li = document.createElement("li");
-  li.innerText = winner.name;
+    cards[index].classList.add("win");
+    cards[1 - index].classList.add("lose");
 
-  document.getElementById("favorites").appendChild(li);
+    setTimeout(() => {
+        nextRound();
+    }, 400);
 }
+
+function showResult(food) {
+    battle.classList.add("hidden");
+    result.classList.remove("hidden");
+
+    document.getElementById("winner").innerText = food.name;
+}
+
+renderCategories();
