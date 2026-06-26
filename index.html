@@ -1,63 +1,59 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fanny Food Battle</title>
-  <link rel="stylesheet" href="styles.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fanny Food Battle</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-  <div class="app">
+<div class="app">
 
-    <!-- Header -->
     <header class="header">
-      <img src="fanny.jpg" class="avatar"/>
-      <h1>Fanny Food Battle</h1>
-      <p class="subtitle">今天吃什么，由你来战</p>
+        <img src="fanny.jpg" class="avatar">
+        <h1>Fanny Food Battle</h1>
     </header>
 
-    <!-- Step 1 -->
-    <section id="step1" class="panel">
-      <h2>Step 1：想吃什么</h2>
-      <div id="categoryList" class="grid"></div>
-      <button onclick="toStep2()">下一步</button>
-    </section>
+    <div class="step-bar">
+        <div class="step active">1</div>
+        <div class="step">2</div>
+        <div class="step">3</div>
+        <div class="step">🏆</div>
+    </div>
 
-    <!-- Step 2 -->
-    <section id="step2" class="panel hidden">
-      <h2>Step 2：不想吃什么</h2>
-      <div id="excludeList" class="grid"></div>
-      <button onclick="startBattle()">开始 Battle</button>
-    </section>
+    <main>
 
-    <!-- Battle -->
-    <section id="battle" class="panel hidden">
+        <div id="setup" class="panel">
 
-      <div class="card-container">
-        <div id="cardA" class="card"></div>
-        <div id="cardB" class="card"></div>
-      </div>
+            <h2 id="stepTitle">选择想吃的分类</h2>
 
-      <div class="controls">
-        <button onclick="pick('A')">👎</button>
-        <button onclick="pick('B')">👍</button>
-      </div>
+            <div id="options" class="options"></div>
 
-    </section>
+            <button id="nextBtn">下一步</button>
 
-    <!-- Result -->
-    <section id="result" class="panel hidden">
-      <h2>今日推荐</h2>
-      <div id="winner"></div>
+        </div>
 
-      <h3>收藏夹</h3>
-      <ul id="favorites"></ul>
-    </section>
+        <div id="battle" class="battle hidden">
 
-  </div>
+            <div class="card" id="cardA"></div>
 
-  <script src="script.js"></script>
+            <div class="vs">VS</div>
+
+            <div class="card" id="cardB"></div>
+
+        </div>
+
+        <div id="result" class="result hidden">
+            <h2>🏆 今日胜者</h2>
+            <div id="winner"></div>
+        </div>
+
+    </main>
+
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
