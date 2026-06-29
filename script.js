@@ -1,120 +1,19 @@
-const categories = [
-    "汉堡", "披萨", "川湘", "快餐",
-    "淮扬菜", "南京菜", "面类", "粉类",
-    "水饺", "烧烤/小吃", "轻食",
-    "火锅麻辣烫", "饮品甜点"
-];
-
-const foods = [
-    { name: "麦当劳", category: "汉堡" },
-    { name: "肯德基", category: "汉堡" },
-    { name: "汉堡王", category: "汉堡" },
-    { name: "必胜客", category: "披萨" },
-    { name: "达美乐", category: "披萨" },
-    { name: "杨国福麻辣烫", category: "火锅麻辣烫" },
-    { name: "星巴克", category: "饮品甜点" }
-];
-
-let step = 1;
-let want = [];
-let notWant = [];
-let pool = [];
-let current = [];
-
-const optionsEl = document.getElementById("options");
-const stepTitle = document.getElementById("stepTitle");
-
-const battle = document.getElementById("battle");
-const setup = document.getElementById("setup");
-const result = document.getElementById("result");
-
-function renderCategories() {
-    optionsEl.innerHTML = "";
-    categories.forEach(c => {
-        const div = document.createElement("div");
-        div.className = "option";
-        div.innerText = c;
-        div.onclick = () => {
-            div.classList.toggle("selected");
-        };
-        optionsEl.appendChild(div);
-    });
-}
-
-document.getElementById("nextBtn").onclick = () => {
-
-    const selected = [...document.querySelectorAll(".option.selected")]
-        .map(e => e.innerText);
-
-    if (step === 1) {
-        want = selected;
-        step = 2;
-        stepTitle.innerText = "选择不想吃的";
-        renderCategories();
-    }
-
-    else if (step === 2) {
-        notWant = selected;
-
-        pool = foods.filter(f =>
-            want.includes(f.category) &&
-            !notWant.includes(f.category)
-        );
-
-        startBattle();
-    }
-};
-
-function startBattle() {
-    setup.classList.add("hidden");
-    battle.classList.remove("hidden");
-
-    nextRound();
-}
-
-function nextRound() {
-    if (pool.length === 1) {
-        showResult(pool[0]);
-        return;
-    }
-
-    current = [pool.pop(), pool.pop()];
-
-    renderBattle();
-}
-
-function renderBattle() {
-    const a = document.getElementById("cardA");
-    const b = document.getElementById("cardB");
-
-    a.innerText = current[0].name;
-    b.innerText = current[1].name;
-
-    a.onclick = () => pick(0);
-    b.onclick = () => pick(1);
-}
-
-function pick(index) {
-    const win = current[index];
-    const lose = current[1 - index];
-
-    pool.unshift(win);
-
-    const cards = document.querySelectorAll(".card");
-
-    cards[index].classList.add("win");
-    cards[1 - index].classList.add("lose");
-
-    setTimeout(() => {
-        nextRound();
-    }, 400);
-}
-
-function showResult(food) {
-    battle.classList.add("hidden");
-    result.classList.remove("hidden");
-
-    document.getElementById("winner").innerText = food.name;
-}
-
-renderCategories();
+const foods=[{name:'麦当劳/肯德基',category:'汉堡',icon:'🍔'},{name:'牛约堡',category:'汉堡',icon:'🍔'},{name:'汉堡王',category:'汉堡',icon:'🍔'},{name:'Shake Shack',category:'汉堡',icon:'🍔'},{name:'Subway',category:'汉堡',icon:'🥪'},{name:'必胜客',category:'披萨',icon:'🍕'},{name:'达美乐',category:'披萨',icon:'🍕'},{name:'老乡鸡',category:'快餐',icon:'🍱'},{name:'老娘舅',category:'快餐',icon:'🍱'},{name:'乡村基',category:'快餐',icon:'🍱'},{name:'南京大排档',category:'南京菜',icon:'🏮'},{name:'兰州牛肉面',category:'面类',icon:'🍜'},{name:'重庆小面',category:'面类',icon:'🍜'},{name:'袁记云饺',category:'水饺',icon:'🥟'},{name:'轻食沙拉',category:'轻食',icon:'🥗'},{name:'杨国福麻辣烫',category:'火锅麻辣烫',icon:'🍲'},{name:'喜茶',category:'饮品甜点',icon:'🧋'},{name:'星巴克',category:'饮品甜点',icon:'☕'}];
+const icons={汉堡:'🍔',披萨:'🍕',快餐:'🍱',南京菜:'🏮',面类:'🍜',水饺:'🥟',轻食:'🥗',火锅麻辣烫:'🍲',饮品甜点:'🧋'};
+const cats=[...new Set(foods.map(f=>f.category))];let step=1,want=[],notWant=[],pool=[],champ=null,i=1,lastPool=[];const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active')}
+function renderCats(mode){const g=$('categoryGrid');g.innerHTML='';cats.forEach(c=>{const b=document.createElement('button');b.className='category-card';b.dataset.cat=c;b.innerHTML='<span class="icon">'+(icons[c]||'🍽️')+'</span><span>'+c+'</span>';b.onclick=()=>b.classList.toggle(mode==='exclude'?'excluded':'selected');g.appendChild(b)})}
+function selected(){return [...document.querySelectorAll('.category-card.selected,.category-card.excluded')].map(x=>x.dataset.cat)}
+function startSetup(){step=1;want=[];notWant=[];$('setupEyebrow').textContent='STEP 1';$('setupTitle').textContent='今天想吃什么？';$('setupNextBtn').textContent='继续 →';$('setupMessage').textContent='';renderCats('want');show('setupScreen')}
+function nextSetup(){const s=selected();if(step===1){if(!s.length){$('setupMessage').textContent='至少选一个分类';return}want=s;step=2;$('setupEyebrow').textContent='STEP 2';$('setupTitle').textContent='今天绝对不要吃什么？';$('setupNextBtn').textContent='开始 Battle!';renderCats('exclude');return}notWant=s;pool=foods.filter(f=>want.includes(f.category)&&!notWant.includes(f.category));lastPool=[...pool];if(pool.length<2){$('setupMessage').textContent='候选太少了，多选几个分类吧';return}champ=pool[0];i=1;show('battleScreen');renderBattle()}
+function card(f,label){return '<span class="card-label">'+label+'</span><div><div class="food-icon">'+f.icon+'</div><div class="food-name">'+f.name+'</div><div class="food-category">'+f.category+'</div></div>'}
+function renderBattle(){const ch=pool[i];$('roundLabel').textContent='Round '+i+' / '+(pool.length-1);$('progressBar').style.width=Math.round((i-1)/(pool.length-1)*100)+'%';$('championCard').className='battle-card';$('challengerCard').className='battle-card';$('championCard').innerHTML=card(champ,'当前冠军');$('challengerCard').innerHTML=card(ch,'挑战者')}
+function choose(kind){const challenger=pool[i];const win=kind==='champ'?champ:challenger;const loseId=kind==='champ'?'challengerCard':'championCard';$(loseId).classList.add('reject','slash');setTimeout(()=>{champ=win;i++;if(i>=pool.length){finish()}else{renderBattle()}},500)}
+function save(f){let h=JSON.parse(localStorage.getItem('ffb_history')||'[]');let c=JSON.parse(localStorage.getItem('ffb_counts')||'{}');let d=new Date().toISOString().slice(0,10);h.unshift({date:d,name:f.name,icon:f.icon,category:f.category});h=h.slice(0,30);c[f.name]=(c[f.name]||0)+1;localStorage.setItem('ffb_history',JSON.stringify(h));localStorage.setItem('ffb_counts',JSON.stringify(c))}
+function finish(){save(champ);$('championIcon').textContent=champ.icon;$('championName').textContent=champ.name;show('championScreen')}
+function hall(){let c=JSON.parse(localStorage.getItem('ffb_counts')||'{}');let a=Object.entries(c).sort((x,y)=>y[1]-x[1]);$('hallList').innerHTML=a.length?'':'<p class="empty">还没有冠军。</p>';a.forEach((r,n)=>{$('hallList').innerHTML+='<div class="rank-item"><b>'+(n+1)+'. '+r[0]+'</b><span>'+r[1]+' 冠</span></div>'});show('hallScreen')}
+function record(){let h=JSON.parse(localStorage.getItem('ffb_history')||'[]');$('recordList').innerHTML=h.length?'':'<p class="empty">还没有记录。</p>';h.slice(0,12).forEach(x=>{$('recordList').innerHTML+='<div class="record-item"><b>'+x.icon+' '+x.name+'</b><span>'+x.date+'</span></div>'});show('recordScreen')}
+function foodList(){let box=$('foodList');box.innerHTML='';foods.forEach(f=>box.innerHTML+='<div class="food-row"><b>'+f.icon+' '+f.name+'</b><span>'+f.category+'</span></div>');show('foodListScreen')}
+function wheel(){show('wheelScreen');$('wheelText').textContent=lastPool.length?'从本次候选里抽一个':'先开始 Battle 选择分类'}
+function spin(){let a=lastPool.length?lastPool:foods;champ=a[Math.floor(Math.random()*a.length)];$('wheel').style.transform='rotate('+(1080+Math.random()*720)+'deg)';setTimeout(finish,1200)}
+$('startBattleBtn').onclick=startSetup;$('setupNextBtn').onclick=nextSetup;$('setupBackBtn').onclick=()=>show('homeScreen');$('battleBackBtn').onclick=()=>show('setupScreen');$('championCard').onclick=()=>choose('champ');$('challengerCard').onclick=()=>choose('challenger');$('keepChampionBtn').onclick=()=>choose('champ');$('chooseChallengerBtn').onclick=()=>choose('challenger');$('againBtn').onclick=startSetup;$('homeBtn').onclick=()=>show('homeScreen');$('favBtn').onclick=()=>$('streakText').textContent='已收藏 ❤️';$('championHallBtn').onclick=hall;$('battleRecordBtn').onclick=record;$('foodListBtn').onclick=foodList;$('luckyWheelBtn').onclick=wheel;$('spinBtn').onclick=spin;$('wheelBackBtn').onclick=()=>show('homeScreen');$('hallBackBtn').onclick=()=>show('homeScreen');$('recordBackBtn').onclick=()=>show('homeScreen');$('foodListBackBtn').onclick=()=>show('homeScreen');$('settingsBtn').onclick=()=>{};
