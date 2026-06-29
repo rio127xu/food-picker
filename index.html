@@ -1,59 +1,54 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fanny Food Battle</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food Battle</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-
-<div class="app">
-
-    <header class="header">
-        <img src="fanny.jpg" class="avatar">
-        <h1>Fanny Food Battle</h1>
-    </header>
-
-    <div class="step-bar">
-        <div class="step active">1</div>
-        <div class="step">2</div>
-        <div class="step">3</div>
-        <div class="step">🏆</div>
-    </div>
-
-    <main>
-
-        <div id="setup" class="panel">
-
-            <h2 id="stepTitle">选择想吃的分类</h2>
-
-            <div id="options" class="options"></div>
-
-            <button id="nextBtn">下一步</button>
-
+  <div id="app" class="app-shell">
+    <section id="homeScreen" class="screen home-screen active">
+      <div class="home-bg"></div>
+      <div class="home-overlay"></div>
+      <div class="home-content">
+        <button class="icon-button top-left" id="settingsBtn">⚙️</button>
+        <button class="pill-button top-right" id="foodListBtn">📖 Food List</button>
+        <div class="brand-block"><div class="crown">👑</div><h1>Food<br />Battle</h1><p>Every Meal Has A Champion</p></div>
+        <div class="home-actions">
+          <button class="main-action" id="startBattleBtn"><span>🍔</span> 开始 Battle <b>→</b></button>
+          <button class="secondary-action purple" id="luckyWheelBtn"><span>🎡</span> Lucky Wheel</button>
+          <button class="secondary-action blue" id="championHallBtn"><span>🏆</span> Champion Hall</button>
+          <button class="secondary-action teal" id="battleRecordBtn"><span>📜</span> Battle Record</button>
         </div>
+      </div>
+    </section>
 
-        <div id="battle" class="battle hidden">
+    <section id="setupScreen" class="screen setup-screen">
+      <div class="page-head"><button class="round-back" id="setupBackBtn">←</button><div class="steps"><span class="step active" data-step="1">1</span><span class="line"></span><span class="step" data-step="2">2</span><span class="line"></span><span class="step" data-step="3">3</span></div><div class="mini-avatar"><img src="fanny.jpg" alt="avatar" /></div></div>
+      <div class="setup-title"><p id="setupEyebrow">STEP 1</p><h2 id="setupTitle">今天想吃什么？</h2><span id="setupHint">可以多选</span></div>
+      <div id="categoryGrid" class="category-grid"></div>
+      <p id="setupMessage" class="setup-message"></p>
+      <button id="setupNextBtn" class="bottom-primary">继续 →</button>
+    </section>
 
-            <div class="card" id="cardA"></div>
+    <section id="battleScreen" class="screen battle-screen">
+      <div class="battle-topbar"><button class="round-back" id="battleBackBtn">←</button><div class="round-info"><strong id="roundLabel">Round 1 / 1</strong><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div></div><div class="mini-avatar"><img src="fanny.jpg" alt="avatar" /></div></div>
+      <div class="arena-copy" id="arenaCopy">今晚只能留下一个！</div>
+      <div class="arena"><button id="championCard" class="battle-card champion-card" type="button"></button><div class="vs-mark">VS</div><button id="challengerCard" class="battle-card challenger-card" type="button"></button></div>
+      <div class="battle-actions"><button id="keepChampionBtn" class="arena-button orange">👑 保留冠军</button><button id="chooseChallengerBtn" class="arena-button violet">⚡ 挑战成功</button></div>
+    </section>
 
-            <div class="vs">VS</div>
+    <section id="championScreen" class="screen champion-screen"><div class="confetti"></div><div class="champion-inner"><div class="big-crown">👑</div><div class="ribbon">今日冠军</div><div id="championIcon" class="champion-food-icon">🍔</div><h2 id="championName">麦当劳</h2><p id="streakText" class="streak-text">新的冠军诞生！</p><div class="champion-actions"><button id="againBtn" class="circle-action">🔄<span>再 Battle</span></button><button id="homeBtn" class="circle-action">🏠<span>首页</span></button><button id="favBtn" class="circle-action">❤️<span>收藏</span></button></div></div></section>
 
-            <div class="card" id="cardB"></div>
+    <section id="wheelScreen" class="screen dark-list-screen"><div class="subpage-head"><button class="round-back" id="wheelBackBtn">←</button><h2>Lucky Wheel</h2><div class="mini-avatar"><img src="fanny.jpg" alt="avatar" /></div></div><div class="wheel-wrap"><div id="wheel" class="wheel"><div class="wheel-center">GO!</div></div><div class="wheel-pointer">▲</div></div><p id="wheelText" class="wheel-text">先选择分类，再来试试手气！</p><button id="spinBtn" class="bottom-primary">点击 GO！试试手气</button></section>
 
-        </div>
+    <section id="hallScreen" class="screen dark-list-screen"><div class="subpage-head"><button class="round-back" id="hallBackBtn">←</button><h2>🏆 Champion Hall</h2><div class="mini-avatar"><img src="fanny.jpg" alt="avatar" /></div></div><div id="hallList" class="rank-list"></div></section>
 
-        <div id="result" class="result hidden">
-            <h2>🏆 今日胜者</h2>
-            <div id="winner"></div>
-        </div>
+    <section id="recordScreen" class="screen dark-list-screen"><div class="subpage-head"><button class="round-back" id="recordBackBtn">←</button><h2>📜 Battle Record</h2><div class="mini-avatar"><img src="fanny.jpg" alt="avatar" /></div></div><div id="recordList" class="record-list"></div></section>
 
-    </main>
-
-</div>
-
-<script src="script.js"></script>
+    <section id="foodListScreen" class="screen setup-screen"><div class="subpage-head light"><button class="round-back" id="foodListBackBtn">←</button><h2>Food List</h2></div><div id="foodList" class="food-list"></div></section>
+  </div>
+  <script src="script.js" defer></script>
 </body>
 </html>
