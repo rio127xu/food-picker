@@ -1,84 +1,30 @@
-const foodList=[
-  { name:"黄焖鸡米饭", category:"饭", tags:["米饭","热食","常吃","不辣","快"], score:9 },
-  { name:"番茄牛腩饭", category:"饭", tags:["米饭","热食","不辣","重口","常吃"], score:8 },
-  { name:"鸡腿便当", category:"快餐", tags:["米饭","快餐","热食","快","便宜"], score:8 },
-  { name:"兰州牛肉面", category:"面", tags:["面食","热食","清淡","快","常吃"], score:8 },
-  { name:"重庆小面", category:"面", tags:["面食","辣","热食","重口","便宜"], score:7 },
-  { name:"螺蛳粉", category:"粉", tags:["粉","辣","重口","热食","常吃"], score:7 },
-  { name:"桂林米粉", category:"粉", tags:["粉","不辣","热食","快","便宜"], score:8 },
-  { name:"手抓饼加蛋", category:"小吃", tags:["小吃","快","便宜","热食","常吃"], score:7 },
-  { name:"煎饺+紫菜汤", category:"小吃", tags:["小吃","热食","不辣","便宜","快"], score:8 },
-  { name:"汉堡套餐", category:"快餐", tags:["快餐","快","常吃","不辣","重口"], score:7 },
-  { name:"粥+蒸饺", category:"清淡", tags:["清淡","热食","不辣","便宜","安全"], score:10 },
-  { name:"鸡汤馄饨", category:"清淡", tags:["清淡","热食","不辣","常吃","安全"], score:9 }
-];
-
-const categories=[...new Set(foodList.map(f=>f.category))];
-let state={step:0,dislikes:[],category:"",rejected:0,last:[]};
-const $=id=>document.getElementById(id);
-
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active')}
-
-function updateStepUI(){document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('active',i<=state.step))}
-
-function renderStep1(){state.step=0;updateStepUI();
-questionArea.innerHTML=`<h2>今天不想吃什么？</h2>
-<div class='button-grid'>${['辣','不辣','重口','清淡','快餐','米饭','面食','粉'].map(x=>`<button class='choice-button' data-x='${x}'>${x}</button>`).join('')}</div>
-<div class='action-row' style='display:flex;justify-content:center;margin-top:20px'>
-<button id='next1' style='font-size:18px;padding:14px 28px;border-radius:16px;background:#ff4f7b;color:#fff'>继续</button>
-</div>`;
-
-questionArea.querySelectorAll('button[data-x]').forEach(b=>b.onclick=()=>b.classList.toggle('selected'));
-$('next1').onclick=renderStep2;
-show('homeScreen');setTimeout(()=>show('setupScreen'),10)
-}
-
-function renderStep2(){state.step=1;updateStepUI();
-const selected=[...questionArea.querySelectorAll('.selected')].map(x=>x.dataset.x);
-state.dislikes=selected;
-questionArea.innerHTML=`<h2>今天想吃哪类？</h2>
-<div class='button-grid'>${categories.map(c=>`<button class='choice-button cat' data-c='${c}'>${c}</button>`).join('')}</div>
-<div class='action-row' style='display:flex;justify-content:center;margin-top:20px'>
-<button id='next2' style='font-size:18px;padding:14px 28px;border-radius:16px;background:#ff4f7b;color:#fff'>开始Battle</button>
-</div>`;
-
-questionArea.querySelectorAll('.cat').forEach(b=>b.onclick=()=>b.classList.toggle('selected'));
-$('next2').onclick=renderBattle;
-}
-
-function renderBattle(){state.step=2;updateStepUI();
-const cats=[...questionArea.querySelectorAll('.selected')].map(x=>x.dataset.c);
-let pool=foodList.filter(f=>cats.includes(f.category)&&!state.dislikes.some(d=>f.tags.includes(d)));
-state.pool=pool;state.i=1;
-state.top=pool[0];state.bottom=pool[1];
-show('battleScreen');draw();
-}
-
-function draw(){
-$('championCard').innerHTML=state.top.name;
-$('challengerCard').innerHTML=state.bottom.name;
-$('roundLabel').innerText=`${state.i}/${state.pool.length-1}`;
-$('progressBar').style.width=(state.i/state.pool.length*100)+'%';
-}
-
-function choose(side){
-const win=side==='top'?state.top:state.bottom;
-const lose=side==='top'?state.bottom:state.top;
-const loseEl=side==='top'?'challengerCard':'championCard';
-$(loseEl).classList.add('reject');
-setTimeout(()=>{
-state.top=win;
-state.i++;
-if(state.i>=state.pool.length){finish(win);return}
-state.bottom=state.pool[state.i];draw();
-},600)
-}
-
-function finish(w){$('championName').innerText=w.name;$('championIcon').innerText='🍽️';show('championScreen')}
-
-$('startBattleBtn').onclick=()=>show('setupScreen');
-$('setupNextBtn').onclick=renderStep1;
-$('keepChampionBtn').onclick=()=>finish(state.top);
-$('chooseChallengerBtn').onclick=()=>choose('bottom');
-$('championCard').onclick=()=>choose('top');
-$('challengerCard').onclick=()=>choose('bottom');
+const foods=[{name:'麦当劳/肯德基',category:'汉堡',icon:'🍔'},{name:'牛约堡',category:'汉堡',icon:'🍔'},{name:'汉堡王',category:'汉堡',icon:'🍔'},{name:'Shake Shack',category:'汉堡',icon:'🍔'},{name:'Hot Source',category:'汉堡',icon:'🍔'},{name:'Subway',category:'汉堡',icon:'🥪'},{name:'必胜客',category:'披萨',icon:'🍕'},{name:'达美乐',category:'披萨',icon:'🍕'},{name:'Mr. Pizza',category:'披萨',icon:'🍕'},{name:'二娃小馆',category:'川湘',icon:'🌶️'},{name:'老乡鸡',category:'快餐',icon:'🍱'},{name:'老娘舅',category:'快餐',icon:'🍱'},{name:'乡村基',category:'快餐',icon:'🍱'},{name:'陈记烤鸭饭',category:'淮扬菜',icon:'🦆'},{name:'东池便当',category:'快餐',icon:'🍱'},{name:'三猫黑鱼花',category:'川湘',icon:'🐟'},{name:'许记酸菜鱼',category:'川湘',icon:'🐟'},{name:'小厨娘淮扬菜',category:'淮扬菜',icon:'🥘'},{name:'狮王府淮扬菜',category:'淮扬菜',icon:'🥘'},{name:'好记金陵宴',category:'南京菜',icon:'🏮'},{name:'高嗲嗲湘味爆炒王',category:'川湘',icon:'🌶️'},{name:'霸碗盖码饭',category:'盖浇饭',icon:'🍛'},{name:'百家小厨南京菜',category:'南京菜',icon:'🏮'},{name:'池奈咖喱蛋包饭',category:'盖浇饭',icon:'🍛'},{name:'上关东东北菜',category:'东北菜',icon:'🥟'},{name:'南京大排档',category:'南京菜',icon:'🏮'},{name:'老头盖浇饭',category:'盖浇饭',icon:'🍛'},{name:'新旺茶餐厅',category:'港式',icon:'🫖'},{name:'粤茗客茶点',category:'港式',icon:'🥧'},{name:'克茗冰室',category:'港式',icon:'🥤'},{name:'兰州牛肉面',category:'面类',icon:'🍜'},{name:'重庆小面',category:'面类',icon:'🍜'},{name:'必胜客/西堤意面',category:'面类',icon:'🍝'},{name:'乔杉衫牛肉米线',category:'粉类',icon:'🍲'},{name:'仲氏米线',category:'粉类',icon:'🍲'},{name:'越南米线PHO',category:'粉类',icon:'🍲'},{name:'鸡鸣汤包',category:'粉类',icon:'🥟'},{name:'老鼓楼汤包',category:'粉类',icon:'🥟'},{name:'鲜满堂现浇米线',category:'粉类',icon:'🍲'},{name:'粉小主贵州酸汤牛肉粉',category:'粉类',icon:'🍲'},{name:'袁记云饺',category:'水饺',icon:'🥟'},{name:'哈尔滨水饺',category:'水饺',icon:'🥟'},{name:'宝记烧烤',category:'烧烤/小吃',icon:'🍢'},{name:'卤人甲鸡爪',category:'烧烤/小吃',icon:'🍗'},{name:'肥叔锅贴',category:'烧烤/小吃',icon:'🥟'},{name:'潘老板炸鸡',category:'烧烤/小吃',icon:'🍗'},{name:'轻食沙拉',category:'轻食',icon:'🥗'},{name:'源香潮汕粥',category:'轻食',icon:'🥣'},{name:'杨国福麻辣烫',category:'火锅麻辣烫',icon:'🍲'},{name:'海底捞拌饭',category:'火锅麻辣烫',icon:'🍲'},{name:'八秒涮鲜牛肉火锅',category:'火锅麻辣烫',icon:'🥘'},{name:'喜茶',category:'饮品甜点',icon:'🧋'},{name:'奈雪的茶',category:'饮品甜点',icon:'🧋'},{name:'蜜雪冰城',category:'饮品甜点',icon:'🍦'},{name:'就是柠',category:'饮品甜点',icon:'🍋'},{name:'小蓝杯',category:'饮品甜点',icon:'☕'},{name:'星巴克',category:'饮品甜点',icon:'☕'},{name:'霸王茶姬',category:'饮品甜点',icon:'🧋'}];
+const icons={汉堡:'🍔',披萨:'🍕',川湘:'🌶️',快餐:'🍱',淮扬菜:'🥘',南京菜:'🏮',盖浇饭:'🍛',东北菜:'🥟',港式:'🫖',面类:'🍜',粉类:'🍲',水饺:'🥟','烧烤/小吃':'🍢',轻食:'🥗',火锅麻辣烫:'🍲',饮品甜点:'🧋'};
+const cats=[...new Set(foods.map(f=>f.category))],$=id=>document.getElementById(id);
+let setupStep=1,want=[],notWant=[],pool=[],topFood=null,bottomFood=null,nextIndex=2,battleWinner=null,wheelWinner=null,wheelSpinning=false;
+const PROFILE_KEY='ffb_v37_profile',HISTORY_KEY='ffb_v37_history';
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0)}
+function today(){return new Date().toISOString().slice(0,10)}
+function loadProfile(){try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}')}catch{return {}}}
+function saveProfile(p){localStorage.setItem(PROFILE_KEY,JSON.stringify(p))}
+function daysSince(date){if(!date)return 99;return Math.max(0,Math.floor((new Date(today())-new Date(date))/86400000))}
+function recentPenalty(date){const d=daysSince(date);return d===0||d===1?40:d===2?20:d===3?10:0}
+function weightFor(food){const p=loadProfile()[food.name]||{};return Math.max(1,80+(p.accepted||0)*8-(p.skipped||0)*2-recentPenalty(p.lastAccepted))}
+function weightedPick(list){const weights=list.map(weightFor),total=weights.reduce((a,b)=>a+b,0);let r=Math.random()*total;for(let i=0;i<list.length;i++){r-=weights[i];if(r<=0)return list[i]}return list[list.length-1]}
+function recordAction(food,action,source){const profile=loadProfile(),item=profile[food.name]||{accepted:0,skipped:0,lastAccepted:null,lastSkipped:null};if(action==='accept'){item.accepted++;item.lastAccepted=today()}else{item.skipped++;item.lastSkipped=today()}profile[food.name]=item;saveProfile(profile);let h=[];try{h=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')}catch{}h.unshift({date:today(),name:food.name,icon:food.icon,category:food.category,action,source});localStorage.setItem(HISTORY_KEY,JSON.stringify(h.slice(0,100)))}
+async function acceptAndShare(food,source){recordAction(food,'accept',source);const text=`Fanny 今天决定吃：\n${food.icon} ${food.name}\n\n来自 Fanny Food Battle 🎡`;try{if(navigator.share){await navigator.share({title:'Fanny Food Battle',text,url:location.href})}else{await navigator.clipboard.writeText(text+'\n'+location.href);alert('分享文案已复制，请打开微信粘贴发送。')}}catch(err){if(err&&err.name!=='AbortError')alert('未能打开分享菜单，请稍后再试。')}finally{show('homeScreen')}}
+function renderCats(mode){const g=$('categoryGrid');g.innerHTML='';cats.forEach(c=>{const b=document.createElement('button');b.className='category-card';if(mode==='exclude'&&want.includes(c))b.classList.add('wanted');b.dataset.cat=c;b.innerHTML=`<span class="icon">${icons[c]||'🍽️'}</span><span>${c}</span>${mode==='exclude'&&want.includes(c)?'<small>已选想吃</small>':''}`;b.onclick=()=>b.classList.toggle(mode==='exclude'?'excluded':'selected');g.appendChild(b)})}
+function selected(){return [...document.querySelectorAll('.category-card.selected,.category-card.excluded')].map(x=>x.dataset.cat)}
+function startSetup(){setupStep=1;want=[];notWant=[];$('setupEyebrow').textContent='STEP 1';$('setupTitle').textContent='今天想吃什么？';$('setupNextBtn').textContent='继续 →';$('setupMessage').textContent='';renderCats('want');show('setupScreen')}
+function nextSetup(){const s=selected();if(setupStep===1){if(!s.length){$('setupMessage').textContent='至少选一个分类';return}want=s;setupStep=2;$('setupEyebrow').textContent='STEP 2';$('setupTitle').textContent='今天绝对不要吃什么？';$('setupNextBtn').textContent='开始 Battle!';$('setupMessage').textContent='';renderCats('exclude');return}notWant=s;pool=foods.filter(f=>want.includes(f.category)&&!notWant.includes(f.category));if(pool.length<2){$('setupMessage').textContent='候选太少了，多选几个分类吧';return}topFood=pool[0];bottomFood=pool[1];nextIndex=2;battleWinner=null;show('battleScreen');renderBattle()}
+function card(f,label){return `<span class="card-label">${label}</span><div><div class="food-icon">${f.icon}</div><div class="food-name">${f.name}</div><div class="food-category">${f.category}</div></div>`}
+function renderBattle(){const total=pool.length-1,round=Math.min(nextIndex-1,total);$('roundLabel').textContent=`Round ${round} / ${total}`;$('progressBar').style.width=Math.round((round-1)/total*100)+'%';$('championCard').className='battle-card';$('challengerCard').className='battle-card';$('championCard').innerHTML=card(topFood,'上方选手');$('challengerCard').innerHTML=card(bottomFood,'下方选手')}
+function choose(pos){const winner=pos==='top'?topFood:bottomFood,loseId=pos==='top'?'challengerCard':'championCard';$(loseId).classList.add('reject','slash');setTimeout(()=>{if(nextIndex>=pool.length){finishBattle(winner);return}if(pos==='top')bottomFood=pool[nextIndex];else topFood=pool[nextIndex];nextIndex++;renderBattle()},600)}
+function finishBattle(food){battleWinner=food;$('championIcon').textContent=food.icon;$('championName').textContent=food.name;show('championScreen')}
+function openWheel(){wheelWinner=null;$('wheelText').textContent='点一下，让转盘帮你决定';$('spinBtn').disabled=false;show('wheelScreen')}
+function spin(){if(wheelSpinning)return;wheelSpinning=true;$('spinBtn').disabled=true;wheelWinner=weightedPick(foods);const turns=1080+Math.floor(Math.random()*720);$('wheel').style.transform=`rotate(${turns}deg)`;setTimeout(()=>{$('wheelResultIcon').textContent=wheelWinner.icon;$('wheelResultName').textContent=wheelWinner.name;wheelSpinning=false;show('wheelResultScreen')},1200)}
+function spinAgain(){if(wheelWinner)recordAction(wheelWinner,'skip','wheel');openWheel();setTimeout(spin,80)}
+function hall(){const p=loadProfile(),a=Object.entries(p).filter(([,v])=>v.accepted).sort((x,y)=>y[1].accepted-x[1].accepted);$('hallList').innerHTML=a.length?'':'<p class="empty">还没有冠军。</p>';a.forEach(([name,v],n)=>{$('hallList').innerHTML+=`<div class="rank-item"><b>${n+1}. ${name}</b><span>${v.accepted} 次</span></div>`});show('hallScreen')}
+function record(){let h=[];try{h=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')}catch{}const accepted=h.filter(x=>x.action==='accept');$('recordList').innerHTML=accepted.length?'':'<p class="empty">还没有记录。</p>';accepted.slice(0,20).forEach(x=>{$('recordList').innerHTML+=`<div class="record-item"><b>${x.icon} ${x.name}</b><span>${x.date}</span></div>`});show('recordScreen')}
+function showFoodList(){const box=$('foodList');box.innerHTML='';foods.forEach(f=>box.innerHTML+=`<div class="food-row"><b>${f.icon} ${f.name}</b><span>${f.category}</span></div>`);show('foodListScreen')}
+$('luckyWheelBtn').onclick=openWheel;$('startBattleBtn').onclick=startSetup;$('setupNextBtn').onclick=nextSetup;$('setupBackBtn').onclick=()=>show('homeScreen');$('battleBackBtn').onclick=()=>show('setupScreen');$('championCard').onclick=()=>choose('top');$('challengerCard').onclick=()=>choose('bottom');$('keepChampionBtn').onclick=()=>choose('top');$('chooseChallengerBtn').onclick=()=>choose('bottom');$('battleShareBtn').onclick=()=>battleWinner&&acceptAndShare(battleWinner,'battle');$('againBtn').onclick=startSetup;$('spinBtn').onclick=spin;$('spinAgainBtn').onclick=spinAgain;$('wheelShareBtn').onclick=()=>wheelWinner&&acceptAndShare(wheelWinner,'wheel');$('wheelBackBtn').onclick=()=>show('homeScreen');$('championHallBtn').onclick=hall;$('battleRecordBtn').onclick=record;$('foodListBtn').onclick=showFoodList;$('hallBackBtn').onclick=()=>show('homeScreen');$('recordBackBtn').onclick=()=>show('homeScreen');$('foodListBackBtn').onclick=()=>show('homeScreen');$('settingsBtn').onclick=()=>{};
